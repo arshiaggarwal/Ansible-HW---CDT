@@ -1,0 +1,6 @@
+ftp_user: ftpuser
+ftp_password: ftpuser123
+ftp_root: /srv/ftp
+flag_value: "FLAG{misconfigured_ftp_access}"
+pasv_min_port: 40000
+pasv_max_port: 40010

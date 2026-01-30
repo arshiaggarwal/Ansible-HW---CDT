@@ -1,0 +1,22 @@
+listen=YES
+listen_ipv6=NO
+
+anonymous_enable=YES
+local_enable=YES
+write_enable=NO
+
+anon_root={{ ftp_root }}
+anon_world_readable_only=NO
+
+chroot_local_user=YES
+allow_writeable_chroot=YES
+
+pasv_enable=YES
+pasv_min_port={{ pasv_min_port }}
+pasv_max_port={{ pasv_max_port }}
+
+user_sub_token=$USER
+local_root={{ ftp_root }}
+
+xferlog_enable=YES
+connect_from_port_20=YES

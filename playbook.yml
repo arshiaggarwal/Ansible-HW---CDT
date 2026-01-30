@@ -1,0 +1,60 @@
+- name: Deploy Misconfigured FTP Server
+  hosts: ftp
+  become: true
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Install vsftpd
+      apt:
+        name: vsftpd
+        state: present
+        update_cache: yes
+
+    - name: Ensure FTP root directory exists
+      file:
+        path: "{{ ftp_root }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create public FTP directory
+      file:
+        path: "{{ ftp_root }}/pub"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy public readme
+      copy:
+        src: files/readme.txt
+        dest: "{{ ftp_root }}/pub/readme.txt"
+        mode: '0644'
+
+    - name: Create flag file (intentionally readable)
+      copy:
+        content: "{{ flag_value }}"
+        dest: "{{ ftp_root }}/flag.txt"
+        mode: '0644'
+
+    - name: Create weak FTP user
+      user:
+        name: "{{ ftp_user }}"
+        password: "{{ ftp_password | password_hash('sha512') }}"
+        shell: /usr/sbin/nologin
+        state: present
+
+    - name: Deploy vulnerable vsftpd configuration
+      template:
+        src: templates/vsftpd.conf.j2
+        dest: /etc/vsftpd.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart vsftpd
+
+  handlers:
+    - name: Restart vsftpd
+      service:
+        name: vsftpd
+        state: restarted
