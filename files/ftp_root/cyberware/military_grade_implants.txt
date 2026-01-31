@@ -1,0 +1,12 @@
+CATEGORY: MILITARY-GRADE CYBERWARE
+
+DESCRIPTION:
+Implants exceeding civilian performance thresholds.
+
+ACCESS RESTRICTIONS:
+Non-commercial.
+Deployment tightly controlled.
+
+WARNING:
+High correlation with cyberpsychosis.
+Containment protocols recommended.

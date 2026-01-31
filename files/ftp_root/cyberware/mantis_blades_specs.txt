@@ -1,0 +1,14 @@
+CYBERWARE DESIGNATION: MANTIS BLADES
+
+DESCRIPTION:
+Retractable monomolecular blades mounted in forearms.
+
+INTENDED USE:
+Close-quarters combat and intimidation.
+
+LIMITATIONS:
+Highly visible modification.
+Increased scrutiny from law enforcement and corporate security.
+
+STATUS:
+Production ongoing.

@@ -1,8 +1,0 @@
-** DOCUMENTATION **
-
-** LIVES IN ~/.ssh/config **
-
-Host cyberrange-vm
-  HostName 100.65.3.142
-  User cyberrange
-  ProxyJump sshproxy@ssh.cyberrange.rit.edu

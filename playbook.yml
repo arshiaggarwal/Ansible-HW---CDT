@@ -19,23 +19,15 @@
         group: root
         mode: '0755'
 
-    - name: Create public FTP directory
-      file:
-        path: "{{ ftp_root }}/pub"
-        state: directory
-        mode: '0755'
-
-    - name: Deploy public readme
+    - name: Deploy Arasaka FTP file structure
       copy:
-        src: files/readme.txt
-        dest: "{{ ftp_root }}/pub/readme.txt"
+        src: files/ftp_root/
+        dest: "{{ ftp_root }}/"
+        owner: root
+        group: root
         mode: '0644'
+        directory_mode: '0755'
 
-    - name: Create flag file (intentionally readable)
-      copy:
-        content: "{{ flag_value }}"
-        dest: "{{ ftp_root }}/flag.txt"
-        mode: '0644'
 
     - name: Create weak FTP user
       user:

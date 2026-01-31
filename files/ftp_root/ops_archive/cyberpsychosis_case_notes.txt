@@ -1,0 +1,13 @@
+TOPIC: CYBERPSYCHOSIS
+
+DESCRIPTION:
+Neurodegenerative condition linked to excessive
+cyberware implantation.
+
+SYMPTOMS:
+- Hallucinations
+- Loss of empathy
+- Violent behavior
+
+CORPORATE RESPONSE:
+Containment prioritized over treatment.

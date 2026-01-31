@@ -1,0 +1,13 @@
+CYBERWARE CATEGORY: CYBERDECK
+
+PURPOSE:
+Primary interface for netrunning and network intrusion.
+
+CORE CAPABILITIES:
+- Quickhack execution
+- ICE interaction
+- Network traversal
+
+NOTE:
+Deck capability varies significantly by manufacturer
+and firmware revision.
