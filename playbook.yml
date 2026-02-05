@@ -1,52 +1,82 @@
-- name: Deploy Misconfigured FTP Server
+- name: Deploy vulnerable vsftpd 2.3.4 container
   hosts: ftp
   become: true
-  vars_files:
-    - vars/main.yml
+
+  vars:
+    build_dir: /home/cyberrange/docker_build
+    image_name: vsftpd_234
+    container_name: vsftpd
 
   tasks:
-    - name: Install vsftpd
-      apt:
+
+    - name: Stop and disable host vsftpd if present
+      service:
         name: vsftpd
+        state: stopped
+        enabled: false
+      ignore_errors: yes
+
+    - name: Stop and disable xinetd if present
+      service:
+        name: xinetd
+        state: stopped
+        enabled: false
+      ignore_errors: yes
+
+    - name: Remove old vsftpd container if it exists
+      docker_container:
+        name: "{{ container_name }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
         state: present
         update_cache: yes
 
-    - name: Ensure FTP root directory exists
+    - name: Ensure Docker build directory exists
       file:
-        path: "{{ ftp_root }}"
+        path: "{{ build_dir }}"
         state: directory
-        owner: root
-        group: root
-        mode: '0755'
 
-    - name: Deploy Arasaka FTP file structure
+    - name: Copy Dockerfile
       copy:
-        src: files/ftp_root/
-        dest: "{{ ftp_root }}/"
-        owner: root
-        group: root
+        src: files/vsftpd_docker/Dockerfile
+        dest: "{{ build_dir }}/Dockerfile"
         mode: '0644'
-        directory_mode: '0755'
 
-
-    - name: Create weak FTP user
-      user:
-        name: "{{ ftp_user }}"
-        password: "{{ ftp_password | password_hash('sha512') }}"
-        shell: /usr/sbin/nologin
-        state: present
-
-    - name: Deploy vulnerable vsftpd configuration
-      template:
-        src: templates/vsftpd.conf.j2
-        dest: /etc/vsftpd.conf
-        owner: root
-        group: root
+    - name: Copy vsftpd tarball into build context
+      copy:
+        src: vsftpd-2.3.4.tar.gz
+        dest: "{{ build_dir }}/vsftpd-2.3.4.tar.gz"
         mode: '0644'
-      notify: Restart vsftpd
 
-  handlers:
-    - name: Restart vsftpd
+    - name: Copy vsftpd.conf into build context
+      copy:
+        src: files/vsftpd_docker/vsftpd.conf
+        dest: "{{ build_dir }}/vsftpd.conf"
+        mode: '0644'
+
+    - name: Start Docker service
       service:
-        name: vsftpd
-        state: restarted
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Build vsftpd Docker image
+      community.docker.docker_image:
+        name: "{{ image_name }}"
+        source: build
+        build:
+          path: "{{ build_dir }}"
+          pull: yes
+
+    - name: Run vulnerable vsftpd container
+      docker_container:
+        name: "{{ container_name }}"
+        image: "{{ image_name }}"
+        state: started
+        restart_policy: unless-stopped
+        network_mode: host
+        command: /usr/sbin/vsftpd /etc/vsftpd.conf

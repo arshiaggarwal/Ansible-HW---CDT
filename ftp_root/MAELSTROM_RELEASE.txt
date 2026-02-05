@@ -5,5 +5,6 @@ No paywalls. No more corporate control.
 
 Uptime is mandatory.
 Attempts to restrict access will be countered.
+Only admins are given upload access.
 
 Data belongs to the city.

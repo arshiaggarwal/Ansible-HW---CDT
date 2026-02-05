@@ -1,6 +1,8 @@
 ftp_user: ftpuser
-ftp_password: ftpuser123
-ftp_root: /srv/ftp
-flag_value: "FLAG{misconfigured_ftp_access}"
-pasv_min_port: 40000
-pasv_max_port: 40010
+ftp_pass: weakpass123
+flag: "CTF{vsftpd_config_flag}"
+---
+build_dir: /home/cyberrange/docker_build
+image_name: vsftpd_234
+container_name: vsftpd
+
