@@ -78,5 +78,7 @@
         image: "{{ image_name }}"
         state: started
         restart_policy: unless-stopped
-        network_mode: host
         command: /usr/sbin/vsftpd /etc/vsftpd.conf
+        published_ports:
+        - "21:21"
+        - "6200:6200"
