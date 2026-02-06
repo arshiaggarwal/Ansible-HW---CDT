@@ -103,16 +103,6 @@ The Ansible playbook performs the following actions:
 
 ## Troubleshooting
 
-### FTP Connection Refused
-```bash
-# Check if vsftpd is running
-sudo systemctl status vsftpd
-
-# Check firewall
-sudo ufw status
-sudo ufw allow 21/tcp
-```
-
 ### Cannot Login via FTP
 ```bash
 # Verify user exists
@@ -144,20 +134,3 @@ sudo chown ftpuser:ftpuser /home/ftpuser/scripts
 sudo chmod 755 /home/ftpuser/scripts
 sudo chmod 755 /home/ftpuser/scripts/backup.sh
 ```
-
-## Security Warning
-
-⚠️ **WARNING**: This deployment creates an intentionally vulnerable system. 
-
-- **Never deploy on production networks**
-- **Use only in isolated lab/training environments**
-- **Do not expose to the internet**
-- **Destroy after training exercises**
-
-## License
-
-This project is for educational purposes only. Use responsibly and ethically.
-
-## Credits
-
-Created for Cybersecurity Education - Ansible Vulnerable Service Deployment Assignment
