@@ -44,27 +44,27 @@ sudo yum install ansible -y
 
 ### Step 1: Clone the Repository
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/arshiaggarwal/Ansible-HW---CDT.git
 cd ansible-vuln-vsftpd
 ```
 
 ### Step 2: Configure Inventory
 
-**For localhost deployment (testing on same machine):**
+**CUSTOM IP, Hostname, Credentials, SSH Method:**
 
-The default `inventory.ini` is already configured for localhost. No changes needed.
+The default `inventory.ini` is already configured for an OpenStack VM.
 
-**For remote deployment:**
+**For custom deployment:**
 
 Edit `inventory.ini`:
 ```bash
 nano inventory.ini
 ```
 
-Comment out localhost and add your target:
+Add your target:
 ```ini
-[vulnerable_servers]
-# localhost ansible_connection=local
+[ftp]
+# Comment out initial details
 
 # Replace with your target details
 target_server ansible_host=192.168.1.100 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
@@ -72,11 +72,11 @@ target_server ansible_host=192.168.1.100 ansible_user=ubuntu ansible_ssh_private
 
 ### Step 3: Test Connectivity
 ```bash
-# For localhost
-ansible -i inventory.ini vulnerable_servers -m ping
+# Without password prompt
+ansible -i inventory.ini ftp -m ping
 
-# For remote host
-ansible -i inventory.ini vulnerable_servers -m ping --ask-pass
+# With password prompt
+ansible -i inventory.ini ftp -m ping --ask-pass
 ```
 
 Expected output:
@@ -266,19 +266,6 @@ sudo nano /etc/vsftpd.conf
 sudo systemctl restart vsftpd
 ```
 
-### Issue: Cannot connect to FTP from remote machine
-
-**Solution:**
-```bash
-# Check firewall
-sudo ufw status
-sudo ufw allow 21/tcp
-sudo ufw reload
-
-# Check if vsftpd is listening
-sudo netstat -tlnp | grep :21
-```
-
 ### Issue: Cron job not executing
 
 **Solution:**
@@ -306,20 +293,7 @@ grep write_enable /etc/vsftpd.conf
 # Should show: write_enable=YES
 ```
 
-### Issue: Playbook fails on "password_hash" filter
-
-**Solution:**
-```bash
-# Install required Python package
-pip3 install passlib
-
-# Or on Ubuntu
-sudo apt install python3-passlib
-```
-
-## Screenshots Required
-
-Take screenshots of:
+## Applicable Screenshots
 
 1. **Ansible playbook execution** - Full terminal output showing success
 2. **Service status** - `sudo systemctl status vsftpd` showing active
@@ -328,4 +302,4 @@ Take screenshots of:
 5. **Cron job listing** - `sudo crontab -l` output
 6. **Backup log** - `sudo cat /var/log/backup.log` showing execution
 
-Save all screenshots in `screenshots/deployment/` directory.
+All screenshots saved in `screenshots/deployment/` directory.
