@@ -1,8 +1,17 @@
-ftp_user: ftpuser
-ftp_pass: weakpass123
-flag: "CTF{vsftpd_config_flag}"
 ---
-build_dir: /home/cyberrange/docker_build
-image_name: vsftpd_234
-container_name: vsftpd
+# FTP User Configuration
+ftp_username: ftpuser
+ftp_password: ftppass123  # Change this for production use
+ftp_home_dir: /home/ftpuser
 
+# vsftpd Configuration
+vsftpd_config_path: /etc/vsftpd.conf
+vsftpd_log_path: /var/log/vsftpd.log
+
+# Vulnerability Configuration
+vulnerable_script_path: "{{ ftp_home_dir }}/scripts/backup.sh"
+cron_interval: "*/1"  # Every 5 minutes
+
+# System Configuration
+target_os: ubuntu
+target_version: "22.04"

@@ -1,84 +1,141 @@
-- name: Deploy vulnerable vsftpd 2.3.4 container
+---
+- name: Deploy Vulnerable vsftpd 3.0.5 with Privilege Escalation
   hosts: ftp
-  become: true
-
-  vars:
-    build_dir: /home/cyberrange/docker_build
-    image_name: vsftpd_234
-    container_name: vsftpd
+  become: yes
+  vars_files:
+    - vars/main.yml
 
   tasks:
-
-    - name: Stop and disable host vsftpd if present
-      service:
-        name: vsftpd
-        state: stopped
-        enabled: false
-      ignore_errors: yes
-
-    - name: Stop and disable xinetd if present
-      service:
-        name: xinetd
-        state: stopped
-        enabled: false
-      ignore_errors: yes
-
-    - name: Remove old vsftpd container if it exists
-      docker_container:
-        name: "{{ container_name }}"
-        state: absent
-      ignore_errors: yes
-
-    - name: Install Docker
+    - name: Update apt cache
       apt:
-        name: docker.io
-        state: present
         update_cache: yes
+        cache_valid_time: 3600
+      tags: [setup]
 
-    - name: Ensure Docker build directory exists
+    - name: Install required packages
+      apt:
+        name:
+          - vsftpd
+          - ftp
+        state: present
+      tags: [setup]
+
+    - name: Create ftpuser group
+      group:
+        name: "{{ ftp_username }}"
+        state: present
+      tags: [user_setup]
+
+    - name: Create ftpuser with known password
+      user:
+        name: "{{ ftp_username }}"
+        password: "{{ ftp_password | password_hash('sha512') }}"
+        shell: /bin/bash
+        home: "{{ ftp_home_dir }}"
+        createhome: yes
+        groups: "{{ ftp_username }}"
+        state: present
+      tags: [user_setup]
+
+    - name: Ensure ftpuser home directory has correct permissions
       file:
-        path: "{{ build_dir }}"
+        path: "{{ ftp_home_dir }}"
         state: directory
+        owner: "{{ ftp_username }}"
+        group: "{{ ftp_username }}"
+        mode: '0755'
+      tags: [user_setup]
 
-    - name: Copy Dockerfile
+    - name: Create scripts directory in ftpuser home (VULNERABLE - writable by ftpuser)
+      file:
+        path: "{{ ftp_home_dir }}/scripts"
+        state: directory
+        owner: "{{ ftp_username }}"
+        group: "{{ ftp_username }}"
+        mode: '0755'
+      tags: [vulnerability]
+
+    - name: Deploy initial benign backup script
       copy:
-        src: files/vsftpd_docker/Dockerfile
-        dest: "{{ build_dir }}/Dockerfile"
-        mode: '0644'
+        src: files/vulnerable_script.sh
+        dest: "{{ ftp_home_dir }}/scripts/backup.sh"
+        owner: "{{ ftp_username }}"
+        group: "{{ ftp_username }}"
+        mode: '0755'
+      tags: [vulnerability]
 
-    - name: Copy vsftpd tarball into build context
-      copy:
-        src: vsftpd-2.3.4.tar.gz
-        dest: "{{ build_dir }}/vsftpd-2.3.4.tar.gz"
-        mode: '0644'
+    - name: Configure vsftpd for local user access
+      lineinfile:
+        path: /etc/vsftpd.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        create: yes
+      loop:
+        - { regexp: '^#?local_enable=', line: 'local_enable=YES' }
+        - { regexp: '^#?write_enable=', line: 'write_enable=YES' }
+        - { regexp: '^#?chroot_local_user=', line: 'chroot_local_user=NO' }
+        - { regexp: '^#?allow_writeable_chroot=', line: 'allow_writeable_chroot=YES' }
+        - { regexp: '^#?local_umask=', line: 'local_umask=022' }
+        - { regexp: '^#?xferlog_enable=', line: 'xferlog_enable=YES' }
+        - { regexp: '^#?listen=', line: 'listen=YES' }
+        - { regexp: '^#?listen_ipv6=', line: 'listen_ipv6=NO' }
+        - { regexp: '^#?pam_service_name=', line: 'pam_service_name=vsftpd' }
+      notify: restart vsftpd
+      tags: [config]
 
-    - name: Copy vsftpd.conf into build context
-      copy:
-        src: files/vsftpd_docker/vsftpd.conf
-        dest: "{{ build_dir }}/vsftpd.conf"
-        mode: '0644'
+    - name: Create root cron job that executes script from ftpuser-writable directory (VULNERABILITY)
+      cron:
+        name: "Automated backup script"
+        minute: "*/5"
+        job: "/home/ftpuser/scripts/backup.sh >> /var/log/backup.log 2>&1"
+        user: root
+        state: present
+      tags: [vulnerability]
 
-    - name: Start Docker service
-      service:
-        name: docker
+    - name: Create initial empty backup log
+      file:
+        path: /var/log/backup.log
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+      tags: [vulnerability]
+
+    - name: Ensure vsftpd service is started and enabled
+      systemd:
+        name: vsftpd
         state: started
-        enabled: true
+        enabled: yes
+      tags: [service]
 
-    - name: Build vsftpd Docker image
-      community.docker.docker_image:
-        name: "{{ image_name }}"
-        source: build
-        build:
-          path: "{{ build_dir }}"
-          pull: yes
+    - name: Allow FTP through firewall (if UFW is active)
+      community.general.ufw:
+        rule: allow
+        port: '21'
+        proto: tcp
+      when: ansible_facts.services['ufw.service'] is defined
+      ignore_errors: yes
+      tags: [firewall]
 
-    - name: Run vulnerable vsftpd container
-      docker_container:
-        name: "{{ container_name }}"
-        image: "{{ image_name }}"
-        state: started
-        restart_policy: unless-stopped
-        command: /usr/sbin/vsftpd /etc/vsftpd.conf
-        published_ports:
-        - "21:21"
-        - "6200:6200"
+    - name: Display deployment information
+      debug:
+        msg:
+          - "=========================================="
+          - "Vulnerable vsftpd Deployment Complete!"
+          - "=========================================="
+          - "FTP Server: {{ ansible_default_ipv4.address | default('localhost') }}"
+          - "FTP Username: {{ ftp_username }}"
+          - "FTP Password: {{ ftp_password }}"
+          - "Vulnerable Script Location: {{ ftp_home_dir }}/scripts/backup.sh"
+          - "Cron Job: Runs every 5 minutes as root"
+          - "=========================================="
+          - "SECURITY WARNING: This is an intentionally vulnerable system!"
+          - "Use only in isolated lab environments."
+          - "=========================================="
+      tags: [always]
+
+  handlers:
+    - name: restart vsftpd
+      systemd:
+        name: vsftpd
+        state: restarted
