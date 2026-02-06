@@ -295,11 +295,10 @@ grep write_enable /etc/vsftpd.conf
 
 ## Applicable Screenshots
 
-1. **Ansible playbook execution** - Full terminal output showing success
-2. **Service status** - `sudo systemctl status vsftpd` showing active
-3. **FTP login** - Successful FTP connection
-4. **File listing** - Showing scripts directory via FTP
-5. **Cron job listing** - `sudo crontab -l` output
-6. **Backup log** - `sudo cat /var/log/backup.log` showing execution
+1. **Ansible-playbook-execution.png** - Terminal output showing success
+2. **Ansible-playbook-execution-continued.png** - Terminal output showing success cont.
+3. **FTP-Login-&-File-Listing.png** - Successful FTP connection & FTP contents
+4. **Service-status-&-Cron-job-&-Backup-log.png** - Running vsftpd & Cron job list
+5. **Backup-log.png** - Showing backup.sh execution
 
 All screenshots saved in `screenshots/deployment/` directory.
